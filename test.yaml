@@ -1,0 +1,29 @@
+---
+esphome:
+  name: idasen_desk_controller
+  platform: ESP32
+  board: esp32dev
+
+wifi:
+  ssid: wifi_ssid
+  password: wifi_password
+  fast_connect: true
+
+logger:
+
+sensor:
+  - platform: idasen_desk_controller
+    desk_height:
+      name: "Desk Height"
+
+binary_sensor:
+  - platform: idasen_desk_controller
+    name: "Desk Connection"
+    type: CONNECTION
+  - platform: idasen_desk_controller
+    name: "Desk Moving"
+    type: MOVING
+
+cover:
+  - platform: idasen_desk_controller
+    name: "Desk"

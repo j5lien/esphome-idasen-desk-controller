@@ -1,0 +1,41 @@
+---
+name: ESPHome Idasen Desk Controller CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  schedule:
+    - cron: 0 12 * * *
+
+jobs:
+  esphome-config:
+    runs-on: ubuntu-latest
+    needs: [yamllint]
+    steps:
+      - name: ⤵️ Check out configuration from GitHub
+        uses: actions/checkout@v2
+      - name: Setup pip cache
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: esphome-config-pip-${{ hashFiles('*.yaml') }}
+          restore-keys: esphome-config-pip-
+      - name: Setup Python 3.7
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.7
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip install esphome
+          pip list
+          esphome version
+      - name: Setup custom component folder
+        run: |
+          mkdir custom_components
+          cp -R ./idasen_desk_controller ./custom_components/
+      - name: 🚀 Run esphome config on all files
+        run: |
+          esphome test.yaml config
