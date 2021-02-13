@@ -15,12 +15,6 @@ jobs:
     steps:
       - name: ⤵️ Check out configuration from GitHub
         uses: actions/checkout@v2
-      - name: Setup pip cache
-        uses: actions/cache@v2
-        with:
-          path: ~/.cache/pip
-          key: esphome-config-pip-${{ hashFiles('*.yaml') }}
-          restore-keys: esphome-config-pip-
       - name: Setup Python 3.7
         uses: actions/setup-python@v1
         with:
@@ -31,7 +25,7 @@ jobs:
           pip install esphome
           pip list
           esphome version
-      - name: Setup custom component folder
+      - name: Setup custom components folder
         run: |
           mkdir custom_components
           cp -R ./idasen_desk_controller ./custom_components/

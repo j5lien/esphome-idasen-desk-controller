@@ -11,6 +11,9 @@ wifi:
 
 logger:
 
+idasen_desk_controller:
+  mac_address: "00:00:00:00:00:00"
+
 sensor:
   - platform: idasen_desk_controller
     desk_height:
