@@ -126,20 +126,26 @@ void IdasenDeskControllerComponent::connect() {
   }
 
   if (this->m_input_char_ == nullptr) {
+    ESP_LOGCONFIG(TAG, "Retrieve input remote characteristic.");
     this->m_input_char_ = this->p_client_->getService(inputServiceUUID)->getCharacteristic(inputCharacteristicUUID);
   }
 
   if (this->m_output_char_ == nullptr) {
+    ESP_LOGCONFIG(TAG, "Retrieve output remote characteristic.");
     this->m_output_char_ = this->p_client_->getService(outputServiceUUID)->getCharacteristic(outputCharacteristicUUID);
-    this->m_output_char_->registerForNotify(deskHeightUpdateNotificationCallback);
+    if (this->m_output_char_->canNotify()) {
+      ESP_LOGCONFIG(TAG, "Register notification callback on output characteristic.");
+      this->m_output_char_->registerForNotify(deskHeightUpdateNotificationCallback, true);
+    }
   }
 
   if (this->m_control_char_ == nullptr) {
+    ESP_LOGCONFIG(TAG, "Retrieve control remote characteristic.");
     this->m_control_char_ =
         this->p_client_->getService(controlServiceUUID)->getCharacteristic(controlCharacteristicUUID);
   }
 
-  ESP_LOGCONFIG(TAG, "Success to connect to client");
+  ESP_LOGCONFIG(TAG, "Success connecting client to device");
 
   this->set_timeout(5000, [this]() {
     this->set_speed(0);
