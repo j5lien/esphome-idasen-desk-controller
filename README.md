@@ -1,8 +1,10 @@
 This component creates a bluetooth bridge for an Ikea Idasen desk that uses a Linak controller with [ESPHome](https://esphome.io) and an [ESP32 device](https://esphome.io/devices/esp32.html).
 
-![Home Assistant Desk Controller](ha-desk-controller.png)
+| [Cover integration](https://www.home-assistant.io/integrations/cover/) | [Linak Desk Card](https://github.com/IhorSyerkov/linak-desk-card) |
+| ----------------- | --------------- |
+| ![Home Assistant Desk Controller](ha-desk-controller.png) | <img src="https://user-images.githubusercontent.com/9998984/107797805-a3a6c800-6d5b-11eb-863a-56ae0343995c.png" width="300" /> |
 
-The desk is controlled using the [cover integration](https://www.home-assistant.io/integrations/cover/) in Home assistant.
+The desk is controlled using the [cover integration](https://www.home-assistant.io/integrations/cover/) or [Linak Desk Card](https://github.com/IhorSyerkov/linak-desk-card) which is available in [HACS](https://hacs.xyz) in Home assistant.
 
 ## Installation
 
