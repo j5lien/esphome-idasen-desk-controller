@@ -5,6 +5,7 @@
 
 namespace esphome {
 namespace idasen_desk_controller {
+
 static BLEUUID outputServiceUUID("99fa0020-338a-1024-8a49-009c0215f78a");
 static BLEUUID outputCharacteristicUUID("99fa0021-338a-1024-8a49-009c0215f78a");
 static BLEUUID inputServiceUUID("99fa0030-338a-1024-8a49-009c0215f78a");
@@ -60,9 +61,8 @@ IdasenDeskControllerComponent *IdasenDeskControllerComponent::instance;
 
 void IdasenDeskControllerComponent::set_mac_address(uint64_t address) {
   char buffer[24];
-  auto *address8 = reinterpret_cast<uint8_t *>(&address);
-  snprintf(buffer, sizeof(buffer), "%02X:%02X:%02X:%02X:%02X:%02X", address8[5], address8[4], address8[3], address8[2],
-           address8[1], address8[0]);
+  auto *mac = reinterpret_cast<uint8_t *>(&address);
+  snprintf(buffer, sizeof(buffer), "%02X:%02X:%02X:%02X:%02X:%02X", mac[5], mac[4], mac[3], mac[2], mac[1], mac[0]);
   this->ble_address_ = std::string(buffer);
 }
 
@@ -89,6 +89,7 @@ void IdasenDeskControllerComponent::setup() {
   this->p_client_->setClientCallbacks(this);
 
   this->set_interval("update_desk", 150, [this]() { this->update_desk_(); });
+  this->set_interval("update_height_when_moving", 1000, [this]() { this->update_height_when_moving_(); });
   this->set_timeout(1000, [this]() { this->scan_(); });
 }
 
@@ -148,7 +149,7 @@ void IdasenDeskControllerComponent::connect() {
   ESP_LOGCONFIG(TAG, "Success connecting client to device");
 
   this->set_timeout(5000, [this]() {
-    this->set_speed(0);
+    this->update_moving_state_(false);
     this->set_height(this->get_height_());
   });
 }
@@ -210,6 +211,14 @@ void IdasenDeskControllerComponent::update_desk_() {
   this->move_torwards_();
 }
 
+void IdasenDeskControllerComponent::update_height_when_moving_() {
+  if (false == this->move_) {
+    return;
+  }
+
+  this->set_height(this->get_height_());
+}
+
 void IdasenDeskControllerComponent::set_height(unsigned short height) {
   if (this->desk_height_sensor_ != nullptr) {
     if (!this->desk_height_sensor_->has_state() || this->desk_height_sensor_->get_raw_state() != height) {
@@ -224,9 +233,9 @@ void IdasenDeskControllerComponent::set_height(unsigned short height) {
   }
 }
 
-void IdasenDeskControllerComponent::set_speed(short speed) {
-  bool moving = speed > 0;
+void IdasenDeskControllerComponent::set_speed(short speed) { this->update_moving_state_(speed > 0); }
 
+void IdasenDeskControllerComponent::update_moving_state_(bool moving) {
   if (this->desk_moving_binary_sensor_ != nullptr) {
     if (!this->desk_moving_binary_sensor_->has_state() || this->desk_moving_binary_sensor_->state != moving) {
       this->desk_moving_binary_sensor_->publish_state(moving);
@@ -246,6 +255,7 @@ void IdasenDeskControllerComponent::start_move_torwards_() {
   this->move_ = true;
   writeUInt16(this->m_control_char_, 0xFE);
   writeUInt16(this->m_control_char_, 0xFF);
+  this->update_moving_state_(true);
 }
 
 void IdasenDeskControllerComponent::move_torwards_() {
@@ -256,7 +266,8 @@ void IdasenDeskControllerComponent::stop_move_() {
   this->move_ = false;
   writeUInt16(this->m_control_char_, 0xFF);
   writeUInt16(this->m_input_char_, 0x8001);
-  this->set_speed(0);
+  this->update_moving_state_(false);
+  this->set_height(this->get_height_());
 }
 }  // namespace idasen_desk_controller
 }  // namespace esphome

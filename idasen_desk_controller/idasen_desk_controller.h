@@ -60,7 +60,9 @@ class IdasenDeskControllerComponent : public Component, public cover::Cover, pub
   unsigned short get_height_();
   void set_connection_(bool connected);
 
+  void update_moving_state_(bool mooving);
   void update_desk_();
+  void update_height_when_moving_();
   void start_move_torwards_();
   void move_torwards_();
   void stop_move_();
