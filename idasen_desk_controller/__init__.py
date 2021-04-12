@@ -9,6 +9,7 @@ MULTI_CONF = True
 
 CONF_IDASEN_DESK_CONTROLLER_ID = 'idasen_desk_controller_id'
 CONF_MAC_ADDRESS = 'mac_address'
+CONF_BLUETOOTH_CALLBACK = 'bluetooth_callback'
 
 idasen_desk_controller_ns = cg.esphome_ns.namespace('idasen_desk_controller')
 
@@ -18,6 +19,7 @@ IdasenDeskControllerComponent = idasen_desk_controller_ns.class_(
 CONFIG_SCHEMA = cv.Schema({
     cv.GenerateID(): cv.declare_id(IdasenDeskControllerComponent),
     cv.Required(CONF_MAC_ADDRESS): cv.mac_address,
+    cv.Optional(CONF_BLUETOOTH_CALLBACK, True): cv.boolean
 })
 
 
@@ -26,3 +28,4 @@ def to_code(config):
     yield cg.register_component(var, config)
 
     cg.add(var.set_mac_address(config[CONF_MAC_ADDRESS].as_hex))
+    cg.add(var.use_bluetooth_callback(config[CONF_BLUETOOTH_CALLBACK]))
