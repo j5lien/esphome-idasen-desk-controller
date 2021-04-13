@@ -300,10 +300,8 @@ void IdasenDeskControllerComponent::control(const cover::CoverCall &call) {
       this->current_operation_ = cover::COVER_OPERATION_CLOSING;
     }
 
-    if (this->bluetooth_callback_) {
-      // Prevent from potential stop moving update @see IdasenDeskControllerComponent::stop_move_()
-      this->cancel_timeout("stop_moving_update");
-    }
+    // Prevent from potential stop moving update @see IdasenDeskControllerComponent::stop_move_()
+    this->cancel_timeout("stop_moving_update");
 
     // Instead publish cover data
     this->publish_cover_state_(height);
@@ -331,9 +329,7 @@ void IdasenDeskControllerComponent::stop_move_() {
   writeUInt16(this->m_control_char_, 0xFF);
   writeUInt16(this->m_input_char_, 0x8001);
   this->current_operation_ = cover::COVER_OPERATION_IDLE;
-  if (!this->bluetooth_callback_) {
-    this->set_timeout("stop_moving_update", 200, [this]() { this->update_desk_data(); });
-  }
+  this->set_timeout("stop_moving_update", 200, [this]() { this->update_desk_data(); });
 }
 
 bool IdasenDeskControllerComponent::is_at_target_(unsigned short height) const {
