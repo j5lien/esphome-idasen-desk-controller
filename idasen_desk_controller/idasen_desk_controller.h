@@ -32,7 +32,7 @@ class IdasenDeskControllerComponent : public Component, public cover::Cover, pub
   void onDisconnect(BLEClient *p_client);
   void connect();
 
-  void update_desk_data(uint8_t *pData = nullptr);
+  void update_desk_data(uint8_t *pData = nullptr, bool allow_publishing_cover_state = true);
 
   cover::CoverTraits get_traits() override;
   void control(const cover::CoverCall &call) override;
@@ -53,7 +53,7 @@ class IdasenDeskControllerComponent : public Component, public cover::Cover, pub
   BLERemoteCharacteristic *m_control_char_ = nullptr;
 
   unsigned short height_target_ = 0;
-  bool move_ = false;
+  cover::CoverOperation current_operation_{cover::COVER_OPERATION_IDLE};
 
   void scan_();
   void set_connection_(bool connected);
@@ -61,6 +61,8 @@ class IdasenDeskControllerComponent : public Component, public cover::Cover, pub
   void update_desk_();
   unsigned short get_heigth_();
   bool is_at_target_(unsigned short height) const;
+  void publish_cover_state_(unsigned short height);
+  void publish_cover_state_(float position);
 
   void start_move_torwards_();
   void move_torwards_();

@@ -155,10 +155,7 @@ void IdasenDeskControllerComponent::connect() {
   ESP_LOGCONFIG(TAG, "Success connecting client to device");
 
   // Delay data sync from 5s
-  this->set_timeout(5000, [this]() {
-    this->update_desk_data();
-    this->publish_state(false);
-  });
+  this->set_timeout(5000, [this]() { this->update_desk_data(); });
 }
 
 void IdasenDeskControllerComponent::onConnect(BLEClient *p_client) { this->set_connection_(true); }
@@ -182,10 +179,13 @@ void IdasenDeskControllerComponent::set_connection_(bool connected) {
   }
 }
 
-void IdasenDeskControllerComponent::update_desk_data(uint8_t *pData) {
+void IdasenDeskControllerComponent::update_desk_data(uint8_t *pData, bool allow_publishing_cover_state) {
   unsigned short height;
   float speed;
-  if (pData != nullptr) {
+  bool callback_data = pData != nullptr;
+
+  if (callback_data) {
+    // Data from the callback
     height = (*(uint16_t *) pData) / 100;
     speed = (*(uint16_t *) (pData + 2)) / 100;
   } else {
@@ -204,21 +204,46 @@ void IdasenDeskControllerComponent::update_desk_data(uint8_t *pData) {
     }
   }
 
-  // set cover position
-  float position = (float) height / (float) deskMaxHeight;
-  if (position != this->position) {
-    this->position = position;
-  }
-
   // set moving state
   bool moving = speed > 0;
+  bool moving_updated = false;
   if (this->desk_moving_binary_sensor_ != nullptr) {
     if (!this->desk_moving_binary_sensor_->has_state() || this->desk_moving_binary_sensor_->state != moving) {
       this->desk_moving_binary_sensor_->publish_state(moving);
-      // Publish cover state (when move starts and ends)
-      this->publish_state(false);
+      moving_updated = true;
     }
   }
+
+  if (!allow_publishing_cover_state) {
+    return;
+  }
+
+  // Publish cover state
+  float position = (float) height / (float) deskMaxHeight;
+  bool position_updated = position != this->position;
+  bool operation_updated = this->current_operation_ != this->current_operation;
+
+  // No updated needed when nothing has changed
+  if (!position_updated && !operation_updated) {
+    return;
+  }
+
+  // Only position has been updated when moving
+  if (!moving_updated && !operation_updated && moving) {
+    return;
+  }
+
+  this->publish_cover_state_(position);
+}
+
+void IdasenDeskControllerComponent::publish_cover_state_(unsigned short height) {
+  this->publish_cover_state_((float) height / (float) deskMaxHeight);
+}
+
+void IdasenDeskControllerComponent::publish_cover_state_(float position) {
+  this->position = position;
+  this->current_operation = this->current_operation_;
+  this->set_timeout("update_cover_state", 1, [this]() { this->publish_state(false); });
 }
 
 unsigned short IdasenDeskControllerComponent::get_heigth_() {
@@ -230,12 +255,13 @@ unsigned short IdasenDeskControllerComponent::get_heigth_() {
 }
 
 void IdasenDeskControllerComponent::update_desk_() {
-  if (false == this->move_) {
+  // Was stopped
+  if (this->current_operation_ == cover::COVER_OPERATION_IDLE) {
     return;
   }
 
   if (!this->bluetooth_callback_) {
-    this->update_desk_data();
+    this->update_desk_data(nullptr, false);
   }
 
   // Retrieve current desk height
@@ -254,13 +280,13 @@ void IdasenDeskControllerComponent::update_desk_() {
 
 void IdasenDeskControllerComponent::control(const cover::CoverCall &call) {
   if (call.get_position().has_value()) {
-    if (true == this->move_) {
+    if (this->current_operation_ != cover::COVER_OPERATION_IDLE) {
       this->stop_move_();
     }
 
     float pos = *call.get_position();
     this->height_target_ = (unsigned short) (pos * deskMaxHeight);
-    this->update_desk_data();
+    this->update_desk_data(nullptr, false);
     unsigned short height = this->get_heigth_();
     ESP_LOGD(TAG, "Cover control - START - position %f - target %i - current %i", pos, this->height_target_, height);
 
@@ -269,11 +295,21 @@ void IdasenDeskControllerComponent::control(const cover::CoverCall &call) {
     }
 
     if (this->height_target_ > height) {
-      this->current_operation = cover::COVER_OPERATION_OPENING;
+      this->current_operation_ = cover::COVER_OPERATION_OPENING;
     } else {
-      this->current_operation = cover::COVER_OPERATION_CLOSING;
+      this->current_operation_ = cover::COVER_OPERATION_CLOSING;
     }
+
+    if (this->bluetooth_callback_) {
+      // Prevent from potential stop moving update @see IdasenDeskControllerComponent::stop_move_()
+      this->cancel_timeout("stop_moving_update");
+    }
+
+    // Instead publish cover data
+    this->publish_cover_state_(height);
+
     this->start_move_torwards_();
+    return;
   }
 
   if (call.get_stop()) {
@@ -283,7 +319,6 @@ void IdasenDeskControllerComponent::control(const cover::CoverCall &call) {
 }
 
 void IdasenDeskControllerComponent::start_move_torwards_() {
-  this->move_ = true;
   writeUInt16(this->m_control_char_, 0xFE);
   writeUInt16(this->m_control_char_, 0xFF);
 }
@@ -293,17 +328,16 @@ void IdasenDeskControllerComponent::move_torwards_() {
 }
 
 void IdasenDeskControllerComponent::stop_move_() {
-  this->move_ = false;
   writeUInt16(this->m_control_char_, 0xFF);
   writeUInt16(this->m_input_char_, 0x8001);
-  this->current_operation = cover::COVER_OPERATION_IDLE;
+  this->current_operation_ = cover::COVER_OPERATION_IDLE;
   if (!this->bluetooth_callback_) {
-    this->update_desk_data();
+    this->set_timeout("stop_moving_update", 200, [this]() { this->update_desk_data(); });
   }
 }
 
 bool IdasenDeskControllerComponent::is_at_target_(unsigned short height) const {
-  switch (this->current_operation) {
+  switch (this->current_operation_) {
     case cover::COVER_OPERATION_OPENING:
       return height >= this->height_target_;
     case cover::COVER_OPERATION_CLOSING:
