@@ -13,9 +13,10 @@ class IdasenDeskControllerComponent : public Component, public cover::Cover, pub
   IdasenDeskControllerComponent() : Component(){};
 
   void set_mac_address(uint64_t address);
+  void use_bluetooth_callback(bool bluetooth_callback) { bluetooth_callback_ = bluetooth_callback; };
   void set_ble_device(BLEAdvertisedDevice *device);
 
-  void set_desk_height_sensor(sensor::Sensor *desk_height_sensor) { desk_height_sensor_ = desk_height_sensor; }
+  void set_desk_height_sensor(sensor::Sensor *desk_height_sensor);
   void set_desk_moving_binary_sensor(binary_sensor::BinarySensor *desk_moving_binary_sensor) {
     desk_moving_binary_sensor_ = desk_moving_binary_sensor;
   }
@@ -31,11 +32,10 @@ class IdasenDeskControllerComponent : public Component, public cover::Cover, pub
   void onDisconnect(BLEClient *p_client);
   void connect();
 
+  void update_desk_data(uint8_t *pData = nullptr, bool allow_publishing_cover_state = true);
+
   cover::CoverTraits get_traits() override;
   void control(const cover::CoverCall &call) override;
-
-  void set_height(unsigned short height);
-  void set_speed(short speed);
 
   static IdasenDeskControllerComponent *instance;
 
@@ -45,6 +45,7 @@ class IdasenDeskControllerComponent : public Component, public cover::Cover, pub
   binary_sensor::BinarySensor *desk_connection_binary_sensor_ = nullptr;
 
   std::string ble_address_;
+  bool bluetooth_callback_;
   BLEAdvertisedDevice *ble_device_ = nullptr;
   BLEClient *p_client_ = nullptr;
   BLERemoteCharacteristic *m_input_char_ = nullptr;
@@ -52,15 +53,17 @@ class IdasenDeskControllerComponent : public Component, public cover::Cover, pub
   BLERemoteCharacteristic *m_control_char_ = nullptr;
 
   unsigned short height_target_ = 0;
-  bool move_ = false;
-  bool move_up_ = true;
+  cover::CoverOperation current_operation_{cover::COVER_OPERATION_IDLE};
 
   void scan_();
-
-  unsigned short get_height_();
   void set_connection_(bool connected);
 
   void update_desk_();
+  unsigned short get_heigth_();
+  bool is_at_target_(unsigned short height) const;
+  void publish_cover_state_(unsigned short height);
+  void publish_cover_state_(float position);
+
   void start_move_torwards_();
   void move_torwards_();
   void stop_move_();
