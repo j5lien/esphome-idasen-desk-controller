@@ -39,6 +39,8 @@ sensor:
     desk_height:
       # Height in cm
       name: "Desk Height"
+      # Millimeter precision
+      accuracy_decimals: 1
 
 binary_sensor:
   # Desk bluetooth connection
@@ -75,12 +77,32 @@ wifi:
 ### Sensors not updating
 
 When height sensor, moving binary sensor or cover don't correctly update after moving the desk using the cover entity, it means the bluetooth callback doesn't correctly work.
-You can deactivate the bluetooth callback option to not rely on it :
+You can deactivate the bluetooth callback option to not rely on it:
 
 ```yaml
 idasen_desk_controller:
     mac_address: "00:00:00:00:00:00"
     bluetooth_callback: false
+```
+
+### Home assistant deconnexion
+
+It's possible to get quick deconnexion when the desk is moving and the height sensor is configured for the millimeter precision. To prevent this from happening, you can try to decrease the number of update the sensor publishes:
+
+```yaml
+sensor:
+  - platform: idasen_desk_controller
+    desk_height:
+      # Height in cm
+      name: "Desk Height"
+      # Millimeter precision
+      accuracy_decimals: 1
+      # Prevent updating the sensor more than 1 time every 500ms
+      # while ensuring that the last value is published
+      filters:
+        - or:
+            - throttle: 0.5s
+            - debounce: 0.25s
 ```
 
 ## References
