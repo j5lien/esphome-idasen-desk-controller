@@ -20,6 +20,8 @@ static const char *TAG = "idasen_desk_controller";
 static float transform_height_to_position(float height) { return height / deskMaxHeight; }
 static float transform_position_to_height(float position) { return position * deskMaxHeight; }
 
+double speed_0 = 0;
+
 static void writeUInt16(BLERemoteCharacteristic *charcteristic, unsigned short value) {
   uint8_t data[2];
   data[0] = value;
@@ -196,7 +198,21 @@ void IdasenDeskControllerComponent::update_desk_data(uint8_t *pData, bool allow_
 
   height = (float) height_mm / 10;
 
+  if (speed == 0) {
+    speed_0++;
+  }
+  else if (speed > 0) {
+    speed_0 = 0;
+  }
+
   ESP_LOGD(TAG, "Desk bluetooth data: height %.1f - speed %.1f", height, speed);
+  ESP_LOGD(TAG, "Speed 0.0 Counter: %.1f", speed_0);
+
+  if (speed_0 >= 5) {
+    ESP_LOGD(TAG, "0.0 Counter Limit reached - desk stopped");
+    this->stop_move_();
+    return;
+  }
 
   // set height sensor
   if (this->desk_height_sensor_ != nullptr) {
@@ -277,6 +293,7 @@ void IdasenDeskControllerComponent::update_desk_() {
 
 void IdasenDeskControllerComponent::control(const cover::CoverCall &call) {
   if (call.get_position().has_value()) {
+    speed_0 = 0;
     if (this->current_operation_ != cover::COVER_OPERATION_IDLE) {
       this->stop_move_();
     }
@@ -324,6 +341,7 @@ void IdasenDeskControllerComponent::move_torwards_() {
 }
 
 void IdasenDeskControllerComponent::stop_move_() {
+  speed_0 = 0;
   writeUInt16(this->m_control_char_, 0xFF);
   writeUInt16(this->m_input_char_, 0x8001);
   this->current_operation_ = cover::COVER_OPERATION_IDLE;
