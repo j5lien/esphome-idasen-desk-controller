@@ -25,10 +25,6 @@ jobs:
           pip install esphome
           pip list
           esphome version
-      - name: Setup custom components folder
-        run: |
-          mkdir custom_components
-          cp -R ./idasen_desk_controller ./custom_components/
       - name: 🚀 Run esphome config on test file
         run: |
           esphome test.yaml config
@@ -61,10 +57,6 @@ jobs:
           pip install esphome
           pip list
           esphome version
-      - name: Setup custom components folder
-        run: |
-          mkdir custom_components
-          cp -R ./idasen_desk_controller ./custom_components/
       - name: Register problem matchers
         run: |
           echo "::add-matcher::.github/workflows/matchers/gcc.json"

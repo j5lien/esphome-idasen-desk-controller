@@ -11,6 +11,9 @@ wifi:
 
 logger:
 
+external_components:
+  - source: components
+
 idasen_desk_controller:
   mac_address: "00:00:00:00:00:00"
 
