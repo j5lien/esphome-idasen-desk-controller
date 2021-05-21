@@ -9,6 +9,13 @@ The desk is controlled using the [cover integration](https://www.home-assistant.
 ## Installation
 
 Copy the `idasen_desk_controller` directory into your ESPHome `custom_components` directory (creating it if it does not exist).
+
+If you use ESPHome 1.18.0 or higher you can use the external_components integration like this:
+```
+external_components:
+  - source: github://j5lien/esphome-idasen-desk-controller
+```
+
 For the first connection you will need to press the pairing button on the desk.
 
 ## Dependencies
