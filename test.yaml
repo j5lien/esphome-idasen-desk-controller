@@ -14,21 +14,14 @@ logger:
 external_components:
   - source: components
 
+esp32_ble_tracker:
+
+ble_client:
+  - mac_address: "00:00:00:00:00:00"
+    id: idasen_desk
+
 idasen_desk_controller:
-  mac_address: "00:00:00:00:00:00"
-
-sensor:
-  - platform: idasen_desk_controller
-    desk_height:
-      name: "Desk Height"
-
-binary_sensor:
-  - platform: idasen_desk_controller
-    name: "Desk Connection"
-    type: CONNECTION
-  - platform: idasen_desk_controller
-    name: "Desk Moving"
-    type: MOVING
+  ble_client_id: idasen_desk
 
 cover:
   - platform: idasen_desk_controller

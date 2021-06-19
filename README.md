@@ -6,61 +6,145 @@ This component creates a bluetooth bridge for an [Ikea Idasen](https://www.ikea.
 
 The desk is controlled using the [cover integration](https://www.home-assistant.io/integrations/cover/) or [Linak Desk Card](https://github.com/IhorSyerkov/linak-desk-card) which is available in [HACS](https://hacs.xyz) in Home assistant.
 
+## Dependencies
+
+* This component requires an [ESP32 device](https://esphome.io/devices/esp32.html).
+* [ESPHome 1.19.0 or higher](https://github.com/esphome/esphome/releases).
+
 ## Installation
 
-Copy the `idasen_desk_controller` directory into your ESPHome `custom_components` directory (creating it if it does not exist).
-
-If you use ESPHome 1.18.0 or higher you can use the external_components integration like this:
+You can install this component with [ESPHome external components feature](https://esphome.io/components/external_components.html) like this:
 ```
 external_components:
-  - source: github://j5lien/esphome-idasen-desk-controller@v1.2.0
+  - source: github://j5lien/esphome-idasen-desk-controller@v2.0.0
 ```
 
 For the first connection you will need to press the pairing button on the desk.
 
-## Dependencies
-
-This component requires an [ESP32 device](https://esphome.io/devices/esp32.html).
-
 ## Configuration
 
+### BLE Client
+
+You need first to configure [ESPHome BLE Client](https://esphome.io/components/ble_client.html) (check the documentation for more information):
+
+```yaml
+esp32_ble_tracker:
+
+ble_client:
+  - mac_address: "00:00:00:00:00:00" # Replace with the desk bluetooth mac address
+    id: idasen_desk
+```
+
+### Idasen Desk Controller
+
+Then you need to enable this component with the id of the ble_client component:
 
 ```yaml
 idasen_desk_controller:
-    # Desk controller bluetooth mac address
+    # Reference to the ble client component id
     # -----------
     # Required
-    mac_address: "00:00:00:00:00:00"
-    # Use bluetooth callback to update sensors and cover entities
-    # Deactivate this option when data are not correctly updated when using the cover entity
-    # -----------
-    # Optionnal (default true)
-    bluetooth_callback: true
+    ble_client_id: idasen_desk
+```
 
+### Cover
+
+Now you can add the cover component that will allow you to control your desk:
+
+```yaml
 cover:
   - platform: idasen_desk_controller
     name: "Desk"
+```
+
+### Extra Desk informations
+
+Using [ESPHome BLE Client Sensor](https://esphome.io/components/sensor/ble_client.html), you can expose more informations that doesn't require this custom component.
+
+This is an example that generates sensors that were available in previous versions:
+
+```yaml
+esp32_ble_tracker:
+
+globals:
+  # To store the Desk Connection Status
+  - id: ble_client_connected
+    type: bool
+    initial_value: 'false'
+
+ble_client:
+  - mac_address: "00:00:00:00:00:00"
+    id: idasen_desk
+    on_connect:
+      then:
+        # Update the Desk Connection Status
+        - lambda: |-
+            id(ble_client_connected) = true;
+        - delay: 5s
+        # Update desk height and speed sensors after bluetooth is connected
+        - lambda: |-
+            id(desk_height).update();
+            id(desk_speed).update();
+    on_disconnect:
+      then:
+        # Update the Desk Connection Status
+        - lambda: |-
+            id(ble_client_connected) = false;
 
 sensor:
-  - platform: idasen_desk_controller
-    desk_height:
-      # Height in cm
-      name: "Desk Height"
-      # Millimeter precision
-      accuracy_decimals: 1
+  # Desk Height Sensor
+  - platform: ble_client
+    ble_client_id: idasen_desk
+    id: desk_height
+    name: 'Desk Height'
+    service_uuid: '99fa0020-338a-1024-8a49-009c0215f78a'
+    characteristic_uuid: '99fa0021-338a-1024-8a49-009c0215f78a'
+    icon: 'mdi:arrow-up-down'
+    unit_of_measurement: 'cm'
+    accuracy_decimals: 1
+    update_interval: never
+    notify: true
+    lambda: |-
+      uint16_t raw_height = ((uint16_t)x[1] << 8) | x[0];
+      unsigned short height_mm = raw_height / 10;
+
+      return (float) height_mm / 10;
+
+  # Desk Speed Sensor
+  - platform: ble_client
+    ble_client_id: idasen_desk
+    id: desk_speed
+    name: 'Desk Speed'
+    service_uuid: '99fa0020-338a-1024-8a49-009c0215f78a'
+    characteristic_uuid: '99fa0021-338a-1024-8a49-009c0215f78a'
+    icon: 'mdi:speedometer'
+    unit_of_measurement: 'cm/min' # I'm not sure this unit is correct
+    accuracy_decimals: 0
+    update_interval: never
+    notify: true
+    lambda: |-
+      uint16_t raw_speed = ((uint16_t)x[3] << 8) | x[2];
+      return raw_speed / 100;
 
 binary_sensor:
-  # Desk bluetooth connection
-  - platform: idasen_desk_controller
-    name: "Desk Connection"
-    type: CONNECTION
-  # Desk moving status
-  - platform: idasen_desk_controller
-    name: "Desk Moving"
-    type: MOVING
+  # Desk Bluetooth Connection Status
+  - platform: template
+    name: 'Desk Connection'
+    id: desk_connection
+    lambda: 'return id(ble_client_connected);'
+
+  # Desk Moving Status
+  - platform: template
+    name: 'Desk Moving'
+    id: desk_moving
+    lambda: 'return id(desk_speed).state > 0;'
 ```
 
 ## Troubleshooting
+
+### ESPHome lower than 1.19.0
+
+Check the version [v1.2.0](https://github.com/j5lien/esphome-idasen-desk-controller/releases/tag/v1.2.0) of this component
 
 ### Wifi deconnexion
 
@@ -81,37 +165,8 @@ wifi:
   power_save_mode: none
 ```
 
-### Sensors not updating
-
-When height sensor, moving binary sensor or cover don't correctly update after moving the desk using the cover entity, it means the bluetooth callback doesn't correctly work.
-You can deactivate the bluetooth callback option to not rely on it:
-
-```yaml
-idasen_desk_controller:
-    mac_address: "00:00:00:00:00:00"
-    bluetooth_callback: false
-```
-
-### Home assistant deconnexion
-
-It's possible to get quick deconnexion when the desk is moving and the height sensor is configured for the millimeter precision. To prevent this from happening, you can try to decrease the number of update the sensor publishes:
-
-```yaml
-sensor:
-  - platform: idasen_desk_controller
-    desk_height:
-      # Height in cm
-      name: "Desk Height"
-      # Millimeter precision
-      accuracy_decimals: 1
-      # Prevent updating the sensor more than 1 time every 500ms
-      # while ensuring that the last value is published
-      filters:
-        - or:
-            - throttle: 0.5s
-            - debounce: 0.25s
-```
-
 ## References
 
 * https://github.com/TheRealMazur/LinakDeskEsp32Controller
+* https://esphome.io/components/ble_client.html
+* https://esphome.io/components/sensor/ble_client.html
