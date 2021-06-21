@@ -23,6 +23,7 @@ void IdasenDeskControllerComponent::setup() {
 void IdasenDeskControllerComponent::dump_config() {
   ESP_LOGCONFIG(TAG, "Idasen Desk Controller:");
   ESP_LOGCONFIG(TAG, "  MAC address        : %s", this->parent()->address_str().c_str());
+  ESP_LOGCONFIG(TAG, "  Notifications      : %s", this->notify_disable_ ? "disable" : "enable");
   LOG_COVER("  ", "Desk", this);
 }
 
@@ -91,15 +92,7 @@ void IdasenDeskControllerComponent::gattc_event_handler(esp_gattc_cb_event_t eve
       }
       this->control_handle_ = chr_control->handle;
 
-      this->set_timeout("desk_init", 5000, [this]() {
-        // Read characteristic
-        auto status_read = esp_ble_gattc_read_char(this->parent()->gattc_if, this->parent()->conn_id,
-                                                   this->output_handle_, ESP_GATT_AUTH_REQ_NONE);
-        if (status_read) {
-          this->status_set_warning();
-          ESP_LOGW(TAG, "[%s] Error sending read request for cover, status=%d", this->get_name().c_str(), status_read);
-        }
-      });
+      this->set_timeout("desk_init", 5000, [this]() { this->read_value_(this->output_handle_); });
 
       break;
     }
@@ -129,6 +122,9 @@ void IdasenDeskControllerComponent::gattc_event_handler(esp_gattc_cb_event_t eve
 
     case ESP_GATTC_REG_FOR_NOTIFY_EVT: {
       this->node_state = espbt::ClientState::Established;
+      if (param->reg_for_notify.status == ESP_GATT_OK) {
+        this->notify_disable_ = false;
+      }
       break;
     }
 
@@ -148,6 +144,15 @@ void IdasenDeskControllerComponent::write_value_(uint16_t handle, unsigned short
   if (status != ESP_OK) {
     this->status_set_warning();
     ESP_LOGW(TAG, "[%s] Error sending write request for cover, status=%d", this->get_name().c_str(), status);
+  }
+}
+
+void IdasenDeskControllerComponent::read_value_(uint16_t handle) {
+  auto status_read =
+      esp_ble_gattc_read_char(this->parent()->gattc_if, this->parent()->conn_id, handle, ESP_GATT_AUTH_REQ_NONE);
+  if (status_read) {
+    this->status_set_warning();
+    ESP_LOGW(TAG, "[%s] Error sending read request for cover, status=%d", this->get_name().c_str(), status_read);
   }
 }
 
@@ -180,7 +185,13 @@ void IdasenDeskControllerComponent::publish_cover_state_(uint8_t *value, uint16_
 }
 
 void IdasenDeskControllerComponent::move_desk_() {
-  if (!this->controlled) {
+  if (this->notify_disable_) {
+    if (this->controlled_ || this->current_operation != cover::COVER_OPERATION_IDLE) {
+      this->read_value_(this->output_handle_);
+    }
+  }
+
+  if (!this->controlled_) {
     return;
   }
 
@@ -191,11 +202,27 @@ void IdasenDeskControllerComponent::move_desk_() {
     return;
   }
 
+  if (this->notify_disable_) {
+    if (this->current_operation == cover::COVER_OPERATION_IDLE) {
+      this->not_moving_loop_++;
+      if (this->not_moving_loop_ > 4) {
+        ESP_LOGD(TAG, "Update Desk - desk not moving");
+        this->stop_move_();
+      }
+    } else {
+      this->not_moving_loop_ = 0;
+    }
+  }
+
   ESP_LOGD(TAG, "Update Desk - Move from %.0f to %.0f", this->position * 100, this->position_target_ * 100);
   this->move_torwards_();
 }
 
 void IdasenDeskControllerComponent::control(const cover::CoverCall &call) {
+  if (this->notify_disable_) {
+    this->read_value_(this->output_handle_);
+  }
+
   if (call.get_position().has_value()) {
     if (this->current_operation != cover::COVER_OPERATION_IDLE) {
       this->stop_move_();
@@ -224,7 +251,10 @@ void IdasenDeskControllerComponent::control(const cover::CoverCall &call) {
 }
 
 void IdasenDeskControllerComponent::start_move_torwards_() {
-  this->controlled = true;
+  this->controlled_ = true;
+  if (this->notify_disable_) {
+    this->not_moving_loop_ = 0;
+  }
   this->write_value_(this->control_handle_, 0xFE);
   this->write_value_(this->control_handle_, 0xFF);
 }
@@ -238,7 +268,7 @@ void IdasenDeskControllerComponent::stop_move_() {
   this->write_value_(this->input_handle_, 0x8001);
 
   this->current_operation = cover::COVER_OPERATION_IDLE;
-  this->controlled = false;
+  this->controlled_ = false;
 }
 
 bool IdasenDeskControllerComponent::is_at_target_() const {
@@ -248,6 +278,9 @@ bool IdasenDeskControllerComponent::is_at_target_() const {
     case cover::COVER_OPERATION_CLOSING:
       return this->position <= this->position_target_;
     case cover::COVER_OPERATION_IDLE:
+      if (this->notify_disable_) {
+        return !this->controlled_;
+      }
     default:
       return true;
   }
