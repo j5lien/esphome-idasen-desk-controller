@@ -49,10 +49,14 @@ class IdasenDeskControllerComponent : public Component, public cover::Cover, pub
   espbt::ESPBTUUID control_char_uuid_ = uuid128_from_string("99fa0002-338a-1024-8a49-009c0215f78a");
   uint16_t control_handle_;
 
-  bool controlled = false;
+  bool controlled_ = false;
   float position_target_;
 
+  bool notify_disable_ = true;
+  int not_moving_loop_ = 0;
+
   void write_value_(uint16_t handle, unsigned short value);
+  void read_value_(uint16_t handle);
   void publish_cover_state_(uint8_t *value, uint16_t value_len);
   void move_desk_();
   bool is_at_target_() const;
