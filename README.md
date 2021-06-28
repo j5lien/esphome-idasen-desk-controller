@@ -45,6 +45,10 @@ idasen_desk_controller:
     # -----------
     # Required
     ble_client_id: idasen_desk
+    # Fallback to use only up and down commands (less precise)
+    # -----------
+    # Optional
+    only_up_down_command: false
 ```
 
 ### Cover
@@ -145,6 +149,16 @@ binary_sensor:
 ### ESPHome lower than 1.19.0
 
 Check the version [v1.2.0](https://github.com/j5lien/esphome-idasen-desk-controller/releases/tag/v1.2.0) of this component
+
+### Not moving using cover component
+
+If the desk is not moving using the cover component you can try to activate a fallback option `only_up_down_command`. It will only use up and down commands to control the desk height, it is less precise when you specify a target position.
+
+```yaml
+idasen_desk_controller:
+    ble_client_id: idasen_desk
+    only_up_down_command: true
+```
 
 ### Wifi deconnexion
 
