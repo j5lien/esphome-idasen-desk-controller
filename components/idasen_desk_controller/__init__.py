@@ -5,7 +5,7 @@ from esphome.const import ESP_PLATFORM_ESP32, CONF_ID
 
 DEPENDENCIES = ['ble_client']
 
-AUTO_LOAD = ['binary_sensor', 'cover', 'sensor']
+AUTO_LOAD = ['cover']
 ESP_PLATFORMS = [ESP_PLATFORM_ESP32]
 MULTI_CONF = True
 
