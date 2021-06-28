@@ -10,7 +10,6 @@ ESP_PLATFORMS = [ESP_PLATFORM_ESP32]
 MULTI_CONF = True
 
 CONF_IDASEN_DESK_CONTROLLER_ID = 'idasen_desk_controller_id'
-CONF_BLE_CLIENT_ID = 'ble_client_id'
 
 idasen_desk_controller_ns = cg.esphome_ns.namespace('idasen_desk_controller')
 
