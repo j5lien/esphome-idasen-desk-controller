@@ -2,8 +2,6 @@
 
 #include "esphome/core/component.h"
 #include "esphome/components/cover/cover.h"
-#include "esphome/components/sensor/sensor.h"
-#include "esphome/components/binary_sensor/binary_sensor.h"
 #include "esphome/components/ble_client/ble_client.h"
 #include "esphome/components/esp32_ble_tracker/esp32_ble_tracker.h"
 
@@ -30,6 +28,8 @@ class IdasenDeskControllerComponent : public Component, public cover::Cover, pub
 
   void loop() override;
 
+  void use_only_up_down_command(bool use_only_up_down_command) { use_only_up_down_command_ = use_only_up_down_command; }
+
   void gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc_if,
                            esp_ble_gattc_cb_param_t *param) override;
 
@@ -37,6 +37,8 @@ class IdasenDeskControllerComponent : public Component, public cover::Cover, pub
   void control(const cover::CoverCall &call) override;
 
  private:
+  bool use_only_up_down_command_ = false;
+
   espbt::ESPBTUUID output_service_uuid_ = uuid128_from_string("99fa0020-338a-1024-8a49-009c0215f78a");
   espbt::ESPBTUUID output_char_uuid_ = uuid128_from_string("99fa0021-338a-1024-8a49-009c0215f78a");
   uint16_t output_handle_;
