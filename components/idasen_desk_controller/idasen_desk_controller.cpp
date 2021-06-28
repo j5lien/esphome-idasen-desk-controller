@@ -255,17 +255,29 @@ void IdasenDeskControllerComponent::start_move_torwards_() {
   if (this->notify_disable_) {
     this->not_moving_loop_ = 0;
   }
-  this->write_value_(this->control_handle_, 0xFE);
-  this->write_value_(this->control_handle_, 0xFF);
+  if (false == this->use_only_up_down_command_) {
+    this->write_value_(this->control_handle_, 0xFE);
+    this->write_value_(this->control_handle_, 0xFF);
+  }
 }
 
 void IdasenDeskControllerComponent::move_torwards_() {
-  this->write_value_(this->input_handle_, transform_position_to_height(this->position_target_));
+  if (this->use_only_up_down_command_) {
+    if (this->current_operation == cover::COVER_OPERATION_OPENING) {
+      this->write_value_(this->control_handle_, 0x47);
+    } else if (this->current_operation == cover::COVER_OPERATION_CLOSING) {
+      this->write_value_(this->control_handle_, 0x46);
+    }
+  } else {
+    this->write_value_(this->input_handle_, transform_position_to_height(this->position_target_));
+  }
 }
 
 void IdasenDeskControllerComponent::stop_move_() {
   this->write_value_(this->control_handle_, 0xFF);
-  this->write_value_(this->input_handle_, 0x8001);
+  if (false == this->use_only_up_down_command_) {
+    this->write_value_(this->input_handle_, 0x8001);
+  }
 
   this->current_operation = cover::COVER_OPERATION_IDLE;
   this->controlled_ = false;
