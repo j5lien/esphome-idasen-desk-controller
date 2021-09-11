@@ -35,7 +35,7 @@ ble_client:
     id: idasen_desk
 ```
 
-On OSX, you can find the mac address of the desk by first connecting to it using a supported app (like [Idasen Controller](https://github.com/DWilliames/idasen-controller-mac) or [Desk Remote Control](https://apps.apple.com/us/app/desk-remote-control/id1509037746)), and then running this command in terminal:
+> On OSX, you can find the mac address of the desk by first connecting to it using a supported app (like [Idasen Controller](https://github.com/DWilliames/idasen-controller-mac) or [Desk Remote Control](https://apps.apple.com/us/app/desk-remote-control/id1509037746)), and then running this command in terminal:
 `system_profiler SPBluetoothDataType`
 
 ### Idasen Desk Controller
