@@ -13,7 +13,7 @@ Copy the `idasen_desk_controller` directory into your ESPHome `custom_components
 If you use ESPHome 1.18.0 or higher you can use the external_components integration like this:
 ```
 external_components:
-  - source: github://j5lien/esphome-idasen-desk-controller
+  - source: github://j5lien/esphome-idasen-desk-controller@v2.1.1
 ```
 
 For the first connection you will need to press the pairing button on the desk.
