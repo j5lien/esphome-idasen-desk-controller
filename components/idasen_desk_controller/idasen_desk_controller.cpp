@@ -121,7 +121,7 @@ void IdasenDeskControllerComponent::gattc_event_handler(esp_gattc_cb_event_t eve
     }
 
     case ESP_GATTC_REG_FOR_NOTIFY_EVT: {
-      this->node_state = espbt::ClientState::Established;
+      this->node_state = espbt::ClientState::ESTABLISHED;
       if (param->reg_for_notify.status == ESP_GATT_OK) {
         this->notify_disable_ = false;
       }
