@@ -9,7 +9,7 @@ The desk is controlled using the [cover integration](https://www.home-assistant.
 ## Dependencies
 
 * This component requires an [ESP32 device](https://esphome.io/devices/esp32.html).
-* [ESPHome 1.19.0 or higher](https://github.com/esphome/esphome/releases).
+* [ESPHome 2021.10.0 or higher](https://github.com/esphome/esphome/releases).
 
 ## Installation
 

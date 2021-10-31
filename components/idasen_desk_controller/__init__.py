@@ -1,12 +1,11 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
 from esphome.components import cover, ble_client
-from esphome.const import ESP_PLATFORM_ESP32, CONF_ID
+from esphome.const import CONF_ID
 
-DEPENDENCIES = ['ble_client']
+DEPENDENCIES = ['esp32', 'ble_client']
 
 AUTO_LOAD = ['cover']
-ESP_PLATFORMS = [ESP_PLATFORM_ESP32]
 MULTI_CONF = True
 
 CONF_IDASEN_DESK_CONTROLLER_ID = 'idasen_desk_controller_id'
