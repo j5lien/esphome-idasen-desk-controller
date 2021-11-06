@@ -3,6 +3,8 @@ esphome:
   name: test
   platform: ESP32
   board: esp32dev
+  libraries:
+    - "ESP32 BLE Arduino"
 
 wifi:
   ssid: wifi_ssid

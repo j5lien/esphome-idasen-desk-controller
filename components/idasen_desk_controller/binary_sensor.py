@@ -1,11 +1,11 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
 from esphome.components import binary_sensor
-from esphome.const import ESP_PLATFORM_ESP32, CONF_DEVICE_CLASS, DEVICE_CLASS_CONNECTIVITY, DEVICE_CLASS_MOVING
+from esphome.const import CONF_DEVICE_CLASS, DEVICE_CLASS_CONNECTIVITY, DEVICE_CLASS_MOVING
 from . import IdasenDeskControllerComponent, CONF_IDASEN_DESK_CONTROLLER_ID
 
-ESP_PLATFORMS = [ESP_PLATFORM_ESP32]
-DEPENDENCIES = ['idasen_desk_controller']
+
+DEPENDENCIES = ['esp32', 'idasen_desk_controller']
 
 CONF_TYPE = 'type'
 CONF_CONNECTION = 'CONNECTION'

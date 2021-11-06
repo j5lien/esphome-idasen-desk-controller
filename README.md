@@ -13,7 +13,7 @@ Copy the `idasen_desk_controller` directory into your ESPHome `custom_components
 If you use ESPHome 1.18.0 or higher you can use the external_components integration like this:
 ```
 external_components:
-  - source: github://j5lien/esphome-idasen-desk-controller@v1.2.1
+  - source: github://j5lien/esphome-idasen-desk-controller@v1.2.2
 ```
 
 For the first connection you will need to press the pairing button on the desk.
@@ -23,9 +23,16 @@ For the first connection you will need to press the pairing button on the desk.
 This component requires an [ESP32 device](https://esphome.io/devices/esp32.html).
 
 ## Configuration
-
+**NOTE: Starting with ESPHome 2021.10, additional configuration is required for the `esphome` component!**
 
 ```yaml
+esphome:
+    name: "Desk"
+    platform: esp32
+    board: esp32dev # Replace with your board
+    # Starting with ESPHome 2021.10, libraries need to be included manually
+    libraries:
+      - "ESP32 BLE Arduino" 
 idasen_desk_controller:
     # Desk controller bluetooth mac address
     # -----------

@@ -1,12 +1,10 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
 from esphome.components import sensor
-from esphome.const import ESP_PLATFORM_ESP32
 from esphome.core import coroutine
 from . import IdasenDeskControllerComponent, CONF_IDASEN_DESK_CONTROLLER_ID
 
-ESP_PLATFORMS = [ESP_PLATFORM_ESP32]
-DEPENDENCIES = ['idasen_desk_controller']
+DEPENDENCIES = ['esp32', 'idasen_desk_controller']
 
 CONF_HEIGHT = 'desk_height'
 UNIT_HEIGHT = 'cm'

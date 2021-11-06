@@ -1,10 +1,10 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
 from esphome.components import cover
-from esphome.const import ESP_PLATFORM_ESP32, CONF_ID, CONF_MAC_ADDRESS
+from esphome.const import CONF_ID, CONF_MAC_ADDRESS
 
+DEPENDENCIES = ['esp32']
 AUTO_LOAD = ['binary_sensor', 'cover', 'sensor']
-ESP_PLATFORMS = [ESP_PLATFORM_ESP32]
 MULTI_CONF = True
 
 CONF_IDASEN_DESK_CONTROLLER_ID = 'idasen_desk_controller_id'
