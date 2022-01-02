@@ -180,6 +180,10 @@ void IdasenDeskControllerComponent::set_connection_(bool connected) {
 }
 
 void IdasenDeskControllerComponent::update_desk_data(uint8_t *pData, bool allow_publishing_cover_state) {
+  if (!this->p_client_->isConnected()) {
+    return;
+  }
+
   float height;
   float speed;
   bool callback_data = pData != nullptr;
@@ -268,13 +272,13 @@ float IdasenDeskControllerComponent::get_heigth_() {
 }
 
 void IdasenDeskControllerComponent::update_desk_() {
+  if (!this->bluetooth_callback_) { 
+    this->update_desk_data(nullptr, false);
+  }
+
   // Was stopped
   if (this->current_operation_ == cover::COVER_OPERATION_IDLE) {
     return;
-  }
-
-  if (!this->bluetooth_callback_) {
-    this->update_desk_data(nullptr, false);
   }
 
   // Retrieve current desk height
