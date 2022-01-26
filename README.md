@@ -151,7 +151,7 @@ binary_sensor:
 
 ### ESPHome lower than 1.19.0
 
-Check the version [v1.2.0](https://github.com/j5lien/esphome-idasen-desk-controller/releases/tag/v1.2.0) of this component
+Check the version [v1.2.3](https://github.com/j5lien/esphome-idasen-desk-controller/releases/tag/v1.2.3) of this component
 
 ### Not moving using cover component
 
