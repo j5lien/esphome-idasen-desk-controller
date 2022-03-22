@@ -17,9 +17,8 @@ TYPES = {
 CONFIG_SCHEMA = cv.Schema({
     cv.GenerateID(CONF_IDASEN_DESK_CONTROLLER_ID): cv.use_id(IdasenDeskControllerComponent),
     cv.Optional(CONF_HEIGHT):
-        sensor.sensor_schema(UNIT_HEIGHT, ICON_HEIGHT, 0),
+        sensor.sensor_schema(unit_of_measurement=UNIT_HEIGHT, icon=ICON_HEIGHT, accuracy_decimals=0),
 })
-
 
 @coroutine
 def setup_conf(config, key, hub, func_name):
