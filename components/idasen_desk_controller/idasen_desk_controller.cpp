@@ -65,7 +65,7 @@ void IdasenDeskControllerComponent::gattc_event_handler(esp_gattc_cb_event_t eve
 
       // Register for notification
       auto status_notify =
-          esp_ble_gattc_register_for_notify(this->parent()->gattc_if, this->parent()->remote_bda, this->output_handle_);
+          esp_ble_gattc_register_for_notify(this->parent()->get_gattc_if(), this->parent()->get_remote_bda(), this->output_handle_);
       if (status_notify) {
         ESP_LOGW(TAG, "esp_ble_gattc_register_for_notify failed, status=%d", status_notify);
       }
@@ -98,7 +98,7 @@ void IdasenDeskControllerComponent::gattc_event_handler(esp_gattc_cb_event_t eve
     }
 
     case ESP_GATTC_READ_CHAR_EVT: {
-      if (param->read.conn_id != this->parent()->conn_id)
+      if (param->read.conn_id != this->parent()->get_conn_id())
         break;
       if (param->read.status != ESP_GATT_OK) {
         ESP_LOGW(TAG, "Error reading char at handle %d, status=%d", param->read.handle, param->read.status);
@@ -112,7 +112,7 @@ void IdasenDeskControllerComponent::gattc_event_handler(esp_gattc_cb_event_t eve
     }
 
     case ESP_GATTC_NOTIFY_EVT: {
-      if (param->notify.conn_id != this->parent()->conn_id || param->notify.handle != this->output_handle_)
+      if (param->notify.conn_id != this->parent()->get_conn_id() || param->notify.handle != this->output_handle_)
         break;
       ESP_LOGV(TAG, "[%s] ESP_GATTC_NOTIFY_EVT: handle=0x%x, value=0x%x", this->get_name().c_str(),
                param->notify.handle, param->notify.value[0]);
@@ -138,7 +138,7 @@ void IdasenDeskControllerComponent::write_value_(uint16_t handle, unsigned short
   data[0] = value;
   data[1] = value >> 8;
 
-  esp_err_t status = ::esp_ble_gattc_write_char(this->parent()->gattc_if, this->parent()->conn_id, handle, 2, data,
+  esp_err_t status = ::esp_ble_gattc_write_char(this->parent()->get_gattc_if(), this->parent()->get_conn_id(), handle, 2, data,
                                                 ESP_GATT_WRITE_TYPE_NO_RSP, ESP_GATT_AUTH_REQ_NONE);
 
   if (status != ESP_OK) {
@@ -149,7 +149,7 @@ void IdasenDeskControllerComponent::write_value_(uint16_t handle, unsigned short
 
 void IdasenDeskControllerComponent::read_value_(uint16_t handle) {
   auto status_read =
-      esp_ble_gattc_read_char(this->parent()->gattc_if, this->parent()->conn_id, handle, ESP_GATT_AUTH_REQ_NONE);
+      esp_ble_gattc_read_char(this->parent()->get_gattc_if(), this->parent()->get_conn_id(), handle, ESP_GATT_AUTH_REQ_NONE);
   if (status_read) {
     this->status_set_warning();
     ESP_LOGW(TAG, "[%s] Error sending read request for cover, status=%d", this->get_name().c_str(), status_read);
