@@ -101,6 +101,7 @@ ble_client:
 sensor:
   # Desk Height Sensor
   - platform: ble_client
+    type: characteristic
     ble_client_id: idasen_desk
     id: desk_height
     name: 'Desk Height'
@@ -119,6 +120,7 @@ sensor:
 
   # Desk Speed Sensor
   - platform: ble_client
+    type: characteristic
     ble_client_id: idasen_desk
     id: desk_speed
     name: 'Desk Speed'
